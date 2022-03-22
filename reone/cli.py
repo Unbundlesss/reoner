@@ -3,10 +3,11 @@ import logging
 import os
 from decimal import Decimal
 
-from .utils import extract_bpm, find_32nd_details
 from .interactive import choose_file, choose_offset
+from .mediainfo import MediaInfo
 from .pather import Pather
 from .reone import reone
+from .utils import extract_bpm
 
 
 def main():
@@ -55,10 +56,10 @@ def main():
         logging.error("I need the bpm either in the filename or in --bpm.")
         return
 
-    f32details = [fp32nd, total32nds] = find_32nd_details(sound_file, bpm)
+    media_info = MediaInfo(sound_file, bpm)
 
     if args.offset is None:
-        offset = choose_offset(sound_file, bpm, f32details)
+        offset = choose_offset(sound_file, bpm, media_info)
     else:
         offset = args.offset
 
@@ -66,7 +67,7 @@ def main():
         logging.error('Quit')
         return
 
-    segment = reone(sound_file, bpm, offset, f32details)
+    segment = reone(sound_file, bpm, offset, media_info)
 
     if not segment:
         logging.error('No file')
