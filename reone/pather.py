@@ -54,7 +54,7 @@ class Pather(os.PathLike):
         if start:
             self.__root__ = self._absolute_join(start, *paths, **kwargs)
         os.chdir(self.__root__)
-        return self.__root__
+        return self
 
     @property
     def root(self):

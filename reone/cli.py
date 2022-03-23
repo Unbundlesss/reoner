@@ -3,7 +3,8 @@ import logging
 import os
 from decimal import Decimal
 
-from .interactive import choose_file, choose_offset
+from .interactive import choose_offset
+from .filechooser import choose_file
 from .mediainfo import MediaInfo
 from .pather import Pather
 from .reone import reone
@@ -59,11 +60,11 @@ def main():
     media_info = MediaInfo(sound_file, bpm)
 
     if args.offset is None:
-        offset = choose_offset(sound_file, bpm, media_info)
+        offset = choose_offset(media_info)
     else:
         offset = args.offset
 
-    if offset is False:
+    if offset is None:
         logging.error('Quit')
         return
 
