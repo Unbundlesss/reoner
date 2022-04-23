@@ -1,7 +1,7 @@
 import logging
 from decimal import getcontext, Decimal
-
 from pydub.utils import mediainfo
+from . utils import extract_bpm
 
 
 class MediaInfo:
@@ -28,3 +28,15 @@ class MediaInfo:
         logging.debug(f"total 32nds: {self.total32nds}")
         self.fp32nd = Decimal(self.duration_ts / self.total32nds)
         logging.debug(f"frames per 32nd: {self.fp32nd}")
+
+    @staticmethod
+    def make(filename):
+        """For the sake of simplicity here, lets start with the
+        assumption that we always pull the bpm from the filename"""
+        bpm = extract_bpm(filename)
+        if bpm:
+            logging.debug(f"found bpm: {bpm}")
+            mediainfo = MediaInfo(filename, bpm)
+            return mediainfo
+
+        return False

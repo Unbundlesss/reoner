@@ -2,19 +2,28 @@ import argparse
 import logging
 import os
 from decimal import Decimal
+from .. core.reone import reone
 
-from .interactive import choose_file, choose_offset
-from .mediainfo import MediaInfo
-from .pather import Pather
-from .reone import reone
-from .utils import extract_bpm
+
+from reoner.cli.interactive import choose_file, choose_offset
+from reoner.core.mediainfo import MediaInfo
+from reoner.core.pather import Pather
+from reoner.core.utils import extract_bpm
 
 
 def main():
     parser = argparse.ArgumentParser(description="Re-one your rifffs.")
-    parser.add_argument("file", type=str, help="Path to input file.", nargs="?")
     parser.add_argument(
-        "--outpath", type=Pather.arg_type, required=False, help="Directory where to output files."
+        "file",
+        type=str,
+        help="Path to input file.",
+        nargs="?"
+    )
+    parser.add_argument(
+        "--outpath",
+        type=Pather.arg_type,
+        required=False,
+        help="Directory where to output files."
     )
     parser.add_argument(
         "--bpm",
@@ -73,7 +82,7 @@ def main():
         logging.error('No file')
         return
 
-    root, ext = os.path.splitext(sound_file)
+    root, ext = os.path.splitext(os.path.basename(sound_file))
     if args.outpath is not None:
         logging.debug("getting outpath from --outpath")
         out = Pather(args.outpath)
@@ -81,8 +90,7 @@ def main():
         logging.debug("using in path as outpath")
         out = Pather(sound_file)
 
-    name = f"{root}.wav"
-    final_path = f"{out}/{name}"
+    final_path = f"{out}/{root}.wav"
 
     with open(final_path, "wb") as outfile:
         segment.export(outfile, format="wav")

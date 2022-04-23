@@ -8,6 +8,8 @@ pydub = "*"
 pyinquirer = "*"
 prompt-toolkit = "*"
 pygments = "*"
+pyqt6-tools = "*"
+pysimplegui = "*"
 
 [dev-packages]
 black = "*"
