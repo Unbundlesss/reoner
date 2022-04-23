@@ -6,9 +6,8 @@ from .. core.reone import reone
 
 
 from reoner.cli.interactive import choose_file, choose_offset
-from reoner.core.mediainfo import MediaInfo
 from reoner.core.pather import Pather
-from reoner.core.utils import extract_bpm
+from reoner.core.utils import extract_bpm, MediaInfo
 
 
 def main():
