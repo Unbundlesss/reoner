@@ -2,7 +2,7 @@ import argparse
 import logging
 import os
 from decimal import Decimal
-from .. core.reone import reone
+from reoner.core.reone import reone_directory
 
 
 from reoner.cli.interactive import choose_file, choose_offset
@@ -30,6 +30,14 @@ def main():
         required=False,
         help="manually specify bpm, up to 4 digits of precision, ie 87.1234",
     )
+
+    parser.add_argument(
+        "--directory",
+        action="store_true",
+        required=False,
+        help="Specify that the path entered is a directory.",
+    )
+
     parser.add_argument(
         "--offset",
         type=int,
@@ -43,6 +51,14 @@ def main():
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
     logging.debug(args)
+
+    if args.directory is True:
+        if args.offset is None:
+            logging.error('--directory requires --offset to be specified')
+            return
+        filedir = Pather(args.file)
+        reone_directory(filedir, args.offset)
+        return
 
     if args.file is None:
         # start file chooser dialog
@@ -75,22 +91,14 @@ def main():
         logging.error('Quit')
         return
 
-    segment = reone(sound_file, offset)
+    media_info.set_offset(offset)
 
-    if not segment:
-        logging.error('No file')
-        return
-
-    root, ext = os.path.splitext(os.path.basename(sound_file))
     if args.outpath is not None:
         logging.debug("getting outpath from --outpath")
-        out = Pather(args.outpath)
+        media_info.set_outpath(Pather(args.outpath))
     else:
         logging.debug("using in path as outpath")
-        out = Pather(sound_file)
 
-    final_path = f"{out}/{root}.wav"
+    media_info.reone()
 
-    with open(final_path, "wb") as outfile:
-        segment.export(outfile, format="wav")
-        print(f"File written to {final_path}")
+    media_info.save()

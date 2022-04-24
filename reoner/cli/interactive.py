@@ -8,7 +8,7 @@ from pydub.exceptions import TooManyMissingFrames
 from pydub.playback import play
 from pygments.token import Token
 
-from ..core.utils import MediaInfo
+from ..core.utils import MediaInfo, get_files
 from .. core.pather import Pather
 from .. core.reone import reone
 
@@ -16,17 +16,7 @@ __all__ = ['choose_offset', 'choose_file']
 
 
 def _get_files(path):
-    opts = os.listdir(path)
-    # return a list of
-    opts = [{
-                "name": f'{i}/',
-                "value": i
-            } if os.path.isdir(i) else i for i in opts if os.path.isdir(i) or i.endswith('.aiff')]
-    # filter out hidden files
-    opts = filter(lambda x: not x['name'].startswith('.') if isinstance(x, dict) else not x.startswith('.'), opts)
-    # sort files
-    opts = sorted(opts, key=lambda x: x['name'] if isinstance(x, dict) else x)
-    print(opts)
+    opts = get_files(path)
 
     opts.insert(0, "[quit]")
     opts.insert(0, "[up]")
@@ -76,7 +66,7 @@ def choose_file() -> Union[str, bool]:
     return loop
 
 
-def choose_offset(file, bpm, media_info: MediaInfo):
+def choose_offset(file, media_info: MediaInfo):
     logging.debug(f"total32nds: {media_info.total32nds}")
     result = nudge_loop(file, bpm, 0, media_info)
     while True:
@@ -91,7 +81,7 @@ def choose_offset(file, bpm, media_info: MediaInfo):
         return result[1]
 
 
-def nudge_loop(file, bpm, offset, media_info: MediaInfo):
+def nudge_loop(file, offset, media_info: MediaInfo):
     print(f"You are listening to:\n {file}")
     questions = [{
         "type": "list",
@@ -130,7 +120,7 @@ def nudge_loop(file, bpm, offset, media_info: MediaInfo):
         return ["keep-looping", offset]
     elif nudge_option == "preview":
         try:
-            segment = reone(file, bpm, offset, media_info)
+            segment = reone(file, offset)
             preview = segment[0:2000]
             print('Playing.')
             play(preview)

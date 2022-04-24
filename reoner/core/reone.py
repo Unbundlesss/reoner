@@ -1,7 +1,7 @@
 import logging
 import os.path
 
-from .utils import MediaInfo
+from . utils import MediaInfo, get_files_full_paths
 
 """
 example inputs:
@@ -10,19 +10,27 @@ example inputs:
 4 - name name - Smudge - 57.1445BPM - 2021-08-13-08-33.aiff
 """
 
-__all__ = ['reone']
+__all__ = ['reone', 'reone_directory', 'reone_multiple']
 
 
 def reone(filename, offset):
     media = MediaInfo(filename=filename, offset=offset)
     media.reone()
-    return media.current_segment
+    return media
 
 
-def reone_multiple(filelist, bpm, offset):
+def reone_directory(path, offset):
+    logging.debug(f"Begin re-oneing of {path}")
+    files = get_files_full_paths(path)
+    reone_multiple(files, offset)
+
+
+def reone_multiple(filelist, offset):
     logging.debug(f"Re-oneing {len(filelist)} files.")
     for i in filelist:
         # current = MediaInfo(i)
         logging.debug(f"File {i}")
-        media = MediaInfo(i,)
-        result = reone(i, bpm, offset)
+        media = MediaInfo(i)
+        media.set_offset(offset)
+        media.reone()
+        media.save()
