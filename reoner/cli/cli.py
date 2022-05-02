@@ -6,7 +6,7 @@ from ..core.reone import reone_directory
 
 from .interactive import choose_file, choose_offset
 from ..core.pather import Pather
-from ..core.utils import extract_bpm, MediaInfo
+from ..core.utils import extract_bpm, ReoneableMedia
 
 
 def main():
@@ -79,7 +79,7 @@ def main():
         logging.error("I need the bpm either in the filename or in --bpm.")
         return
 
-    media_info = MediaInfo(filename=sound_file, bpm=bpm)
+    media_info = ReoneableMedia(filename=sound_file, bpm=bpm)
 
     if args.offset is None:
         offset = choose_offset(media_info)

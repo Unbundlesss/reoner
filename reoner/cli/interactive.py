@@ -8,7 +8,7 @@ from pydub.exceptions import TooManyMissingFrames
 from pydub.playback import play
 from pygments.token import Token
 
-from ..core.utils import MediaInfo, get_files
+from ..core.utils import ReoneableMedia, get_files
 from .. core.pather import Pather
 from .. core.reone import reone
 
@@ -66,7 +66,7 @@ def choose_file() -> Union[str, bool]:
     return loop
 
 
-def choose_offset(media_info: MediaInfo):
+def choose_offset(media_info: ReoneableMedia):
     logging.debug(f"total32nds: {media_info.total32nds}")
     result = nudge_loop(media_info.filename, 0, media_info)
     while True:
@@ -81,7 +81,7 @@ def choose_offset(media_info: MediaInfo):
         return result[1]
 
 
-def nudge_loop(file, offset, media_info: MediaInfo):
+def nudge_loop(file, offset, media_info: ReoneableMedia):
     print(f"You are listening to:\n {file}")
     questions = [{
         "type": "list",

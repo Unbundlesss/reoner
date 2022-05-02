@@ -1,7 +1,7 @@
 import logging
 import os.path
 
-from . utils import MediaInfo, get_files_full_paths
+from . utils import ReoneableMedia, get_files_full_paths
 
 """
 example inputs:
@@ -14,7 +14,7 @@ __all__ = ['reone', 'reone_directory', 'reone_multiple']
 
 
 def reone(filename, offset):
-    media = MediaInfo(filename, offset=offset)
+    media = ReoneableMedia(filename, offset=offset)
     media.reone()
     return media
 
@@ -28,9 +28,9 @@ def reone_directory(path, offset):
 def reone_multiple(filelist, offset):
     logging.debug(f"Re-oneing {len(filelist)} files.")
     for i in filelist:
-        # current = MediaInfo(i)
+        # current = ReoneableMedia(i)
         logging.debug(f"File {i}")
-        media = MediaInfo(i)
+        media = ReoneableMedia(i)
         media.set_offset(offset)
         media.reone()
         media.save()
