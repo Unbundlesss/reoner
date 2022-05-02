@@ -1,28 +1,22 @@
 import argparse
 import logging
-import os
 from decimal import Decimal
-from reoner.core.reone import reone_directory
+from ..core.reone import reone_directory
 
 
-from reoner.cli.interactive import choose_file, choose_offset
-from reoner.core.pather import Pather
-from reoner.core.utils import extract_bpm, MediaInfo
+from .interactive import choose_file, choose_offset
+from ..core.pather import Pather
+from ..core.utils import extract_bpm, MediaInfo
 
 
 def main():
     parser = argparse.ArgumentParser(description="Re-one your rifffs.")
-    parser.add_argument(
-        "file",
-        type=str,
-        help="Path to input file.",
-        nargs="?"
-    )
+    parser.add_argument("file", type=str, help="Path to input file.", nargs="?")
     parser.add_argument(
         "--outpath",
         type=Pather.arg_type,
         required=False,
-        help="Directory where to output files."
+        help="Directory where to output files.",
     )
     parser.add_argument(
         "--bpm",
@@ -44,17 +38,22 @@ def main():
         required=False,
         help="The number of 32nds you want to offset by.",
     )
-    parser.add_argument("--verbose", action="store_true", required=False, help="Output a lot of debug info.")
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        required=False,
+        help="Output a lot of debug info.",
+    )
     args = parser.parse_args()
 
     if args.verbose is True:
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+        logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
 
     logging.debug(args)
 
     if args.directory is True:
         if args.offset is None:
-            logging.error('--directory requires --offset to be specified')
+            logging.error("--directory requires --offset to be specified")
             return
         filedir = Pather(args.file)
         reone_directory(filedir, args.offset)
@@ -83,12 +82,12 @@ def main():
     media_info = MediaInfo(filename=sound_file, bpm=bpm)
 
     if args.offset is None:
-        offset = choose_offset(sound_file, media_info.bpm, media_info)
+        offset = choose_offset(media_info)
     else:
         offset = args.offset
 
     if offset is False:
-        logging.error('Quit')
+        logging.error("Quit")
         return
 
     media_info.set_offset(offset)
