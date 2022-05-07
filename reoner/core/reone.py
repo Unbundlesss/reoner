@@ -1,7 +1,7 @@
 import logging
-import os.path
-
-from . utils import ReoneableMedia, get_files_full_paths
+from . pather import Pather
+from . utils import get_files_full_paths
+from . reoneablemedia import ReoneableMedia
 
 """
 example inputs:
@@ -14,12 +14,13 @@ __all__ = ['reone', 'reone_directory', 'reone_multiple']
 
 
 def reone(filename, offset):
-    media = ReoneableMedia(filename, offset=offset)
-    media.reone()
+    media = ReoneableMedia(filename)
+    media.offset = offset
     return media
 
 
-def reone_directory(path, offset):
+def reone_directory(inpath, offset):
+    path = Pather(inpath)
     logging.debug(f"Begin re-oneing of {path}")
     files = get_files_full_paths(path)
     reone_multiple(files, offset)
@@ -31,6 +32,5 @@ def reone_multiple(filelist, offset):
         # current = ReoneableMedia(i)
         logging.debug(f"File {i}")
         media = ReoneableMedia(i)
-        media.set_offset(offset)
-        media.reone()
+        media.offset = offset
         media.save()
