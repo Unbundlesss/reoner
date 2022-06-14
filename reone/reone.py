@@ -2,7 +2,9 @@ import logging
 import os.path
 
 from pydub import AudioSegment
-from .utils import find_32nd_details, chonk
+
+from .mediainfo import MediaInfo
+from .utils import chonk
 
 """
 example inputs:
@@ -11,25 +13,25 @@ example inputs:
 4 - name name - Smudge - 57.1445BPM - 2021-08-13-08-33.aiff
 """
 
+__all__ = ['reone']
 
-def reone(filename, bpm, offset, media32nds=False):
+
+def reone(filename, bpm, offset,
+          media_info: MediaInfo = None):
     if not os.path.isfile(filename):
         logging.error(f"file not a file: {filename}")
         return False
 
-    """this gets a bit messy"""
-    if media32nds is False:
-        [fp32nd, total32nds] = find_32nd_details(filename, bpm)
-    else:
-        [fp32nd, total32nds] = media32nds
+    if media_info is None:
+        media_info = MediaInfo(filename, bpm)
 
-    if not fp32nd:
+    if not media_info.fp32nd:
         logging.debug("Could not determine the frames per 32nd beat.")
         return False
 
     with open(filename, "rb") as sound:
         segment = AudioSegment.from_file(sound)
 
-    adjusted: AudioSegment = chonk(segment, fp32nd, offset)
+    adjusted: AudioSegment = chonk(segment, media_info, offset)
 
     return adjusted

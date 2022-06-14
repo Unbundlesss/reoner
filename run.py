@@ -1,4 +1,4 @@
-from reone.cli import main
+from reone import main
 
 if __name__ == '__main__':
     main()

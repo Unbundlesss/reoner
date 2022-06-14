@@ -1,13 +1,18 @@
 import logging
 import os
 from typing import Union
+
 from PyInquirer import prompt
 from PyInquirer import style_from_dict
-from pygments.token import Token
-from pydub.playback import play
 from pydub.exceptions import TooManyMissingFrames
-from . import reone
+from pydub.playback import play
+from pygments.token import Token
+
+from .mediainfo import MediaInfo
 from .pather import Pather
+from .reone import reone
+
+__all__ = ['choose_offset', 'choose_file']
 
 
 def _get_files(path):
@@ -64,12 +69,12 @@ def choose_file() -> Union[str, bool]:
     return loop
 
 
-def choose_offset(file, bpm, f32details):
-    logging.debug(f"total32nds: {f32details[1]}")
-    result = nudge_loop(file, bpm, 0, f32details)
+def choose_offset(file, bpm, media_info: MediaInfo):
+    logging.debug(f"total32nds: {media_info.total32nds}")
+    result = nudge_loop(file, bpm, 0, media_info)
     while True:
         if result[0] == "keep-looping":
-            result = nudge_loop(file, bpm, result[1], f32details)
+            result = nudge_loop(file, bpm, result[1], media_info)
         else:
             break
 
@@ -79,28 +84,25 @@ def choose_offset(file, bpm, f32details):
         return result[1]
 
 
-def nudge_loop(file, bpm, offset, f32details):
+def nudge_loop(file, bpm, offset, media_info: MediaInfo):
     print(f"You are listening to:\n {file}")
-    logging.debug(f32details)
-    [f32nds, total32nds] = f32details
-
     questions = [{
         "type": "list",
         "name": "nudge_option",
         "message": f"Current offset is {offset}.",
-        "choices": [ {
+        "choices": [{
             "name": "Start it later.",
             "value": "make-bigger"
         }, {
             "name": "Start it earlier.",
             "value": "make-smaller"
-        },{
+        }, {
             "name": f"Preview loop starting at {offset}",
             "value": "preview"
         }, {
             "name": "Start here.",
             "value": "start"
-        },{
+        }, {
             "name": "Start it half bar later.",
             "value": "make-bigger-bigger"
         }, {
@@ -111,17 +113,17 @@ def nudge_loop(file, bpm, offset, f32details):
     answers = prompt(questions)
     nudge_option = answers.get("nudge_option")
     if nudge_option == "make-bigger-bigger":
-        offset = (total32nds, offset + 16)[offset < total32nds]
+        offset = (media_info.total32nds, offset + 16)[offset < media_info.total32nds]
         return ["keep-looping", offset]
     if nudge_option == "make-bigger":
-        offset = (total32nds, offset + 1)[offset < total32nds]
+        offset = (media_info.total32nds, offset + 1)[offset < media_info.total32nds]
         return ["keep-looping", offset]
     elif nudge_option == "make-smaller":
         offset = (0, offset - 1)[offset >= 1]
         return ["keep-looping", offset]
     elif nudge_option == "preview":
         try:
-            segment = reone(file, bpm, offset, f32details)
+            segment = reone(file, bpm, offset, media_info)
             preview = segment[0:2000]
             print('Playing.')
             play(preview)

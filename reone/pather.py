@@ -11,7 +11,7 @@ class Pather(os.PathLike):
     """
 
     def path(self, *paths, **kwargs):
-        """Create new Path based on self.root and provided paths.
+        """Create new Path based on `self.root` and provided paths.
 
         :param paths: List of sub paths
         :param kwargs: required=False
@@ -42,7 +42,7 @@ class Pather(os.PathLike):
     def file(self, name, *args, **kwargs):
         """Open a file.
 
-        :param name: Filename appended to self.root
+        :param name: Filename appended to `self.root`
         :param args: passed to open()
         :param kwargs: passed to open()
 
@@ -68,7 +68,7 @@ class Pather(os.PathLike):
 
     def __call__(self, *paths, **kwargs):
         """Retrieve the absolute path, with appended paths
-        :param paths: List of sub path of self.root
+        :param paths: List of sub path of `self.root`
         """
         return self._absolute_join(self.__root__, *paths, **kwargs)
 
