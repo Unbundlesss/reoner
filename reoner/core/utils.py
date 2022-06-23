@@ -2,10 +2,8 @@ import logging
 import re
 from decimal import Decimal
 from typing import Union, Literal
-
 from pydub import AudioSegment
-
-from .mediainfo import MediaInfo
+from . mediainfo import MediaInfo
 
 
 def extract_bpm(name: str) -> Union[Decimal, Literal[False]]:
@@ -23,6 +21,10 @@ def chonk(segment: AudioSegment, media_info: MediaInfo, offset: int) -> AudioSeg
     logging.debug('Slicing sample')
     end = int(segment.frame_count())
     start = int(offset * media_info.fp32nd)
+
+    logging.debug(f'seg 1 {start} - {end}')
+    logging.debug(f'seg 2 {0} - {start - 1}')
+    # TODO: Fix modulo
     slice1 = segment.get_sample_slice(start, end)
     slice2 = segment.get_sample_slice(0, start - 1)
     return slice1 + slice2

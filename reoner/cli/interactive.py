@@ -8,19 +8,26 @@ from pydub.exceptions import TooManyMissingFrames
 from pydub.playback import play
 from pygments.token import Token
 
-from .mediainfo import MediaInfo
-from .pather import Pather
-from .reone import reone
+from .. core.mediainfo import MediaInfo
+from .. core.pather import Pather
+from .. core.reone import reone
 
 __all__ = ['choose_offset', 'choose_file']
 
 
 def _get_files(path):
     opts = os.listdir(path)
+    # return a list of
     opts = [{
                 "name": f'{i}/',
                 "value": i
             } if os.path.isdir(i) else i for i in opts if os.path.isdir(i) or i.endswith('.aiff')]
+    # filter out hidden files
+    opts = filter(lambda x: not x['name'].startswith('.') if isinstance(x, dict) else not x.startswith('.'), opts)
+    # sort files
+    opts = sorted(opts, key=lambda x: x['name'] if isinstance(x, dict) else x)
+    print(opts)
+
     opts.insert(0, "[quit]")
     opts.insert(0, "[up]")
     return opts
