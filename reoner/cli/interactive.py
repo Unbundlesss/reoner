@@ -8,7 +8,7 @@ from pydub.exceptions import TooManyMissingFrames
 from pydub.playback import play
 from pygments.token import Token
 
-from .. core.mediainfo import MediaInfo
+from ..core.utils import MediaInfo
 from .. core.pather import Pather
 from .. core.reone import reone
 

@@ -3,8 +3,7 @@ import os.path
 
 from pydub import AudioSegment
 
-from . mediainfo import MediaInfo
-from . utils import chonk
+from .utils import chonk, MediaInfo
 
 """
 example inputs:
@@ -36,6 +35,8 @@ def reone(filename, bpm, offset,
 
     return adjusted
 
+
 def reone_multiple(filelist, bpm, offset):
     for i in filelist:
-        MediaInfo(i)
+        current = MediaInfo(i)
+        result = reone(i,bpm,offset)
