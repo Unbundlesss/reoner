@@ -1,9 +1,7 @@
 import logging
 import os.path
 
-from pydub import AudioSegment
-
-from .utils import chonk, MediaInfo
+from .utils import MediaInfo
 
 """
 example inputs:
@@ -15,28 +13,16 @@ example inputs:
 __all__ = ['reone']
 
 
-def reone(filename, bpm, offset,
-          media_info: MediaInfo = None):
-    if not os.path.isfile(filename):
-        logging.error(f"file not a file: {filename}")
-        return False
-
-    if media_info is None:
-        media_info = MediaInfo(filename, bpm)
-
-    if not media_info.fp32nd:
-        logging.debug("Could not determine the frames per 32nd beat.")
-        return False
-
-    with open(filename, "rb") as sound:
-        segment = AudioSegment.from_file(sound)
-
-    adjusted: AudioSegment = chonk(segment, media_info, offset)
-
-    return adjusted
+def reone(filename, offset):
+    media = MediaInfo(filename=filename, offset=offset)
+    media.reone()
+    return media.current_segment
 
 
 def reone_multiple(filelist, bpm, offset):
+    logging.debug(f"Re-oneing {len(filelist)} files.")
     for i in filelist:
-        current = MediaInfo(i)
-        result = reone(i,bpm,offset)
+        # current = MediaInfo(i)
+        logging.debug(f"File {i}")
+        media = MediaInfo(i,)
+        result = reone(i, bpm, offset)

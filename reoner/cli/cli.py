@@ -64,10 +64,10 @@ def main():
         logging.error("I need the bpm either in the filename or in --bpm.")
         return
 
-    media_info = MediaInfo(sound_file, bpm)
+    media_info = MediaInfo(filename=sound_file, bpm=bpm)
 
     if args.offset is None:
-        offset = choose_offset(sound_file, bpm, media_info)
+        offset = choose_offset(sound_file, media_info.bpm, media_info)
     else:
         offset = args.offset
 
@@ -75,7 +75,7 @@ def main():
         logging.error('Quit')
         return
 
-    segment = reone(sound_file, bpm, offset, media_info)
+    segment = reone(sound_file, offset)
 
     if not segment:
         logging.error('No file')
