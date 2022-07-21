@@ -4,66 +4,9 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import BufferControl, HSplit, Window, Layout
 from prompt_toolkit.layout.processors import Transformation, TransformationInput, Processor
-
-
-# from reoner.cli.items import Option, Header, Blank
-
-class MenuItem:
-    focusable = False
-    text_style = 'fg:white'
-    focused_style = None
-    highlighted_style = None
-    indent = 0
-
-    @classmethod
-    def set_highlighted_style(cls, instyle):
-        cls.highlighted_style = instyle
-
-    @classmethod
-    def set_style(cls, instyle):
-        cls.style = instyle
-
-
-class Focusable(MenuItem):
-    focusable = True
-    highlighted_style = 'fg:black bg:lightcyan'
-
-    def am_selected(self):
-        menu = Menu.get_instance()
-        selected = menu.get_selection()
-        return selected == self
-
-
-class Option(Focusable):
-    text_style = 'fg:white'
-    focused_style = 'fg:lightcyan'
-    highlighted_style = 'fg:black bg:lightcyan'
-    indent = 2
-
-    def __init__(self, order, focusable_order, text):
-        self.text = text
-        self.order = order
-        self.focusable_order = focusable_order
-
-
-class Blank(MenuItem):
-    focusable = False
-
-    def __init__(self, order):
-        self.text = ''
-        self.order = order
-
-
-class Header(MenuItem):
-    focusable = False
-    text_style = 'fg:white'
-    focused_style = None
-    highlighted_style = None
-    indent = 0
-
-    def __init__(self, order, text):
-        self.text = text
-        self.order = order
+from typing import Optional, List, Tuple, Union
+from prompt_toolkit.key_binding import merge_key_bindings
+from .items import Option, Blank, Header
 
 
 class MenuColorizer(Processor):
@@ -83,8 +26,16 @@ class Menu:
     def get_instance(cls):
         return cls.instance
 
+    def add_key_bindings(self, key_bindings: KeyBindings):
+
+        if not isinstance(self.kb, KeyBindings):
+            raise Exception('default keybindings are not set.')
+
+        bindings = merge_key_bindings([self.kb, key_bindings])
+        self.kb = bindings
+
     def __init__(self,
-                 options=None,
+                 options: Union[List[Tuple[str, str]], None] = None,
                  header=None,
                  initial_pos=0,
                  left_margin=2):
@@ -97,34 +48,45 @@ class Menu:
         self.option_prefix = ' '
         self.left_margin = left_margin
         self.kb = None
-
-        # Put a reference to the instance in the class.
-        # Lazy way of making the lines retrievable from anywhere
-        Menu.set_singleton(self)
+        self.app = None
 
         if header:
             self.add_header(header)
 
         if options:
-            for i in options:
-                self.add_option(i)
+            for i, j in options:
+                self.add_option(i, j)
 
         text = '\n'.join(map(lambda _x: _x.text, self.items))
         self.doc = Document(text, cursor_position=self.pos)
         self.buf = Buffer(read_only=True, document=self.doc)
         # self.buf_ctl = BufferControl(self.buf, input_processors=[MenuColorizer()])
-        self.buf_ctl = BufferControl(self.buf,input_processors=[MenuColorizer()])
+        self.buf_ctl = BufferControl(self.buf, input_processors=[MenuColorizer()])
         self.split = HSplit([Window(self.buf_ctl, wrap_lines=False, always_hide_cursor=True)])
 
         # Scroll to initial spot
         for _ in range(self.initial_pos + 1):
             self.move_selection(1)
 
+        self.prep_default_key_bindings()
+
+        # Put a reference to the instance in the class.
+        # Lazy way of making the lines retrievable from anywhere
+        Menu.set_singleton(self)
+
+    def build_app(self):
+        if not isinstance(self.kb, KeyBindings):
+            raise Exception('KeyBindings not properly configured.')
+
+        if self.total_focusable_items < 1:
+            raise Exception('There are no selectable options provided.')
+
+        # Don't forget to run self.run() after
         self.app = Application(
             layout=Layout(self.split),
             full_screen=True,
             mouse_support=False,
-            key_bindings=self.bind_keys())
+            key_bindings=self.kb)
 
     @staticmethod
     def transform_line(menu, ti: TransformationInput) -> Transformation:
@@ -141,7 +103,7 @@ class Menu:
         # if this line has a text_style, apply it.
         if not item.focusable:
             frag_list = [(s if s else item.text_style, t) for s, t in ti.fragments]
-        elif item.am_selected():
+        elif item == menu.get_selection():
             prefix += '{}{}'.format(menu.cursor, menu.option_prefix)
             frag_list = [(item.highlighted_style, t) for s, t in ti.fragments]
         else:
@@ -150,9 +112,7 @@ class Menu:
 
         return Transformation([('', indent), ('', prefix)] + frag_list)
 
-
-
-    def bind_keys(self):
+    def prep_default_key_bindings(self):
         kb = KeyBindings()
 
         @kb.add('c-c')
@@ -167,16 +127,21 @@ class Menu:
         def _(e):
             self.move_selection(1)
 
+        @kb.add('enter')
+        def _(e):
+            self.app.exit(self.get_selection())
+
         self.kb = kb
         return kb
 
-    def add_option(self, text):
+    def add_option(self, text, value=None):
         self.total_lines += 1
         self.total_focusable_items += 1
         self.items.append(Option(
             order=self.total_lines - 1,
             focusable_order=self.total_focusable_items - 1,
-            text=text
+            text=text,
+            value=value
         ))
 
     def add_blank(self):
@@ -194,7 +159,7 @@ class Menu:
     def get_options(self):
         return [i for i in self.items if isinstance(i, Option)]
 
-    def get_selection(self):
+    def get_selection(self) -> Optional[Option]:
         for i in self.get_options():
             if i.focusable and i.focusable_order == self.pos:
                 return i
@@ -209,5 +174,6 @@ class Menu:
         focus = self.get_selection()
         self.buf.cursor_position = self.doc.translate_row_col_to_index(focus.order, 0)
 
-    def run(self):
-        self.app.run()
+    def run(self) -> Optional[Option]:
+        self.build_app()
+        return self.app.run()

@@ -1,6 +1,6 @@
 import logging
 from . pather import Pather
-from . utils import get_files_full_paths
+from ..cli.interactive import get_files_full_paths
 from . reoneablemedia import ReoneableMedia
 
 """
