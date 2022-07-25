@@ -6,7 +6,7 @@ from pydub import AudioSegment
 from pydub.utils import mediainfo
 import os
 
-from .pather import Pather
+from . pather import Pather
 
 
 def extract_bpm(name: str) -> Union[Decimal, Literal[False]]:
@@ -20,22 +20,35 @@ def extract_bpm(name: str) -> Union[Decimal, Literal[False]]:
         return False
 
 
-def chonk(segment: AudioSegment, media_info: MediaInfo, offset: int) -> AudioSegment:
-    logging.debug('Slicing sample')
-    end = int(segment.frame_count())
-    start = int(offset * media_info.fp32nd)
+def get_files(path):
+    opts = os.listdir(path)
+    # return a list of
+    opts = [{
+                "name": f'{i}/',
+                "value": i
+            } if os.path.isdir(i) else i for i in opts if os.path.isdir(i) or i.endswith('.aiff')]
+    # filter out hidden files
+    opts = filter(lambda x: not x['name'].startswith('.') if isinstance(x, dict) else not x.startswith('.'), opts)
+    # sort files
+    opts = sorted(opts, key=lambda x: x['name'] if isinstance(x, dict) else x)
 
-    logging.debug(f'seg 1 {start} - {end}')
-    logging.debug(f'seg 2 {0} - {start - 1}')
-    # TODO: Fix modulo
-    slice1 = segment.get_sample_slice(start, end)
-    slice2 = segment.get_sample_slice(0, start - 1)
-    return slice1 + slice2
+    return opts
+
+
+def get_files_full_paths(path):
+    path = os.path.abspath(os.path.realpath(path))
+    listem = os.listdir(path)
+    opts = [f"{path}/{i}" if os.path.isfile(f"{path}/{i}") else None for i in listem if i.endswith('.aiff')]
+    opts = filter(lambda x: x is not None and not x.startswith('.'), opts)
+    # cast as list otherwise it's an iterable
+    opts = list(opts)
+    logging.debug(opts)
+    return opts
 
 
 class MediaInfo:
-    def __init__(self, *args, **kwargs):
-        filename = kwargs.get("filename", False)
+    def __init__(self, filename, **kwargs):
+        # filename = kwargs.get("filename", False)
 
         if not os.path.isfile(filename):
             error = f"file not a file: {filename}"
@@ -54,24 +67,24 @@ class MediaInfo:
             logging.error(error)
             raise AttributeError(error)
 
+        # set the filename based on the existing one
+        root, ext = os.path.splitext(os.path.basename(filename))
+        self.out_name = f"{root}.wav"
+        self.out_path = ''
+        self.final_name = ''
+
         with open(filename, "rb") as sound:
             segment = AudioSegment.from_file(sound)
 
-        self.original_segment = segment
-        self.current_segment = segment
-        self.fp32nd = None
-        self.total32nds = None
-        self.beat32nd = None
-        self.beat_length = None
-        self.duration = None
-        self.duration_ts = None
-        self.filename = filename
-        self.offset = kwargs.get("offset", 0)
-        getcontext().prec = 4
         logging.debug(f"file is: {filename}")
         # confusingly I used the same name mediainfo.
+        self.original_segment = segment
+        self.current_segment = segment
+        self.filename = filename
+        self.set_outpath(filename)
+        self.offset = kwargs.get("offset", 0)
+        getcontext().prec = 4
         self.info = mediainfo(filename)
-        self.outpath = Pather(filename)
         logging.debug(self.info)
         self.duration_ts = Decimal(str(self.info["duration_ts"]))
         self.duration = Decimal(str(self.info["duration"]))
@@ -85,18 +98,28 @@ class MediaInfo:
         logging.debug(f"frames per 32nd: {self.fp32nd}")
 
     def set_outpath(self, path):
-        root, ext = os.path.splitext(os.path.basename(path))
-        self.outpath = Pather(path)
-        final_path = f"{out}/{root}.wav"
-
-        with open(final_path, "wb") as outfile:
-            segment.export(outfile, format="wav")
-            print(f"File written to {final_path}")
+        self.out_path = Pather(path)
+        self.final_name = f"{self.out_path}/{self.out_name}"
 
     def reone(self):
-        adjusted: AudioSegment = chonk(self.original_segment, self.info, self.offset)
-        self.current_segment = adjusted
-        return True
+        logging.debug('Slicing sample')
+        end = int(self.original_segment.frame_count())
+        start = int(self.offset * self.fp32nd)
+
+        logging.debug(f'seg 1 {start} - {end}')
+        logging.debug(f'seg 2 {0} - {start - 1}')
+        # TODO: Fix modulo
+        slice1 = self.original_segment.get_sample_slice(start, end)
+        slice2 = self.original_segment.get_sample_slice(0, start - 1)
+        self.current_segment = slice1 + slice2
+        return self.current_segment
 
     def set_offset(self, offset):
         self.offset = offset
+
+    def save(self):
+        logging.debug(f"Save target is {self.final_name}")
+        with open(self.final_name, "wb") as outfile:
+            self.current_segment.export(outfile, format="wav")
+            print(f"File written to {self.final_name}")
+

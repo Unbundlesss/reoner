@@ -1,4 +1,5 @@
 import os
+import os.path
 
 
 class ImproperlyConfigured(Exception):
@@ -128,12 +129,13 @@ class Pather(os.PathLike):
 
     @staticmethod
     def _absolute_join(base, *paths, **kwargs):
-        absolute_path = os.path.abspath(os.path.join(base, *paths))
+        real = os.path.abspath(os.path.realpath(base))
+        absolute_path = os.path.abspath(os.path.join(real, *paths))
         if not os.path.isdir(absolute_path):
             parent = os.path.dirname(absolute_path)
             if os.path.isdir(parent):
                 return parent
-            raise ImproperlyConfigured("Is not a directory: {}")
+            raise ImproperlyConfigured("Is not a directory: {}".format(absolute_path))
         if kwargs.get("required", False) and not os.path.exists(absolute_path):
             raise ImproperlyConfigured("Create required path: {}".format(absolute_path))
         return absolute_path
