@@ -14,7 +14,7 @@ __all__ = ['reone', 'reone_directory', 'reone_multiple']
 
 
 def reone(filename, offset):
-    media = MediaInfo(filename=filename, offset=offset)
+    media = MediaInfo(filename, offset=offset)
     media.reone()
     return media
 
