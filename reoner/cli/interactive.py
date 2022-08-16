@@ -66,12 +66,12 @@ def choose_file() -> Union[str, bool]:
     return loop
 
 
-def choose_offset(file, media_info: MediaInfo):
+def choose_offset(media_info: MediaInfo):
     logging.debug(f"total32nds: {media_info.total32nds}")
-    result = nudge_loop(file, bpm, 0, media_info)
+    result = nudge_loop(media_info.filename, 0, media_info)
     while True:
         if result[0] == "keep-looping":
-            result = nudge_loop(file, bpm, result[1], media_info)
+            result = nudge_loop(media_info.filename, result[1], media_info)
         else:
             break
 
@@ -120,7 +120,8 @@ def nudge_loop(file, offset, media_info: MediaInfo):
         return ["keep-looping", offset]
     elif nudge_option == "preview":
         try:
-            segment = reone(file, offset)
+            crandf = reone(file, offset)
+            segment = crandf.current_segment
             preview = segment[0:2000]
             print('Playing.')
             play(preview)
