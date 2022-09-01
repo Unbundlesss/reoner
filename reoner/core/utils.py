@@ -47,7 +47,7 @@ def get_files_full_paths(path):
     return opts
 
 
-class MediaInfo:
+class ReoneableMedia:
     def __init__(self, filename, **kwargs):
         # filename = kwargs.get("filename", False)
 
