@@ -2,11 +2,9 @@ import argparse
 import logging
 from decimal import Decimal
 from ..core.reone import reone_directory
-
-
 from .interactive import choose_file, choose_offset
 from ..core.pather import Pather
-from ..core.utils import extract_bpm, ReoneableMedia
+from ..core.reoneablemedia import ReoneableMedia
 
 
 def main():
@@ -18,6 +16,7 @@ def main():
         required=False,
         help="Directory where to output files.",
     )
+
     parser.add_argument(
         "--bpm",
         type=Decimal,
@@ -55,8 +54,8 @@ def main():
         if args.offset is None:
             logging.error("--directory requires --offset to be specified")
             return
-        filedir = Pather(args.file)
-        reone_directory(filedir, args.offset)
+
+        reone_directory(args.file, args.offset)
         return
 
     if args.file is None:
@@ -69,20 +68,18 @@ def main():
         logging.error("I can't figure out the file, sorry.")
         return
 
-    if args.bpm is None:
-        bpm = extract_bpm(sound_file)
-    else:
+    bpm = None
+    if args.bpm is not None:
         logging.debug("getting bpm from --bpm")
         bpm = args.bpm
 
-    if not bpm:
-        logging.error("I need the bpm either in the filename or in --bpm.")
-        return
-
-    media_info = ReoneableMedia(filename=sound_file, bpm=bpm)
+    if bpm:
+        seg = ReoneableMedia(sound_file, bpm=bpm)
+    else:
+        seg = ReoneableMedia(sound_file)
 
     if args.offset is None:
-        offset = choose_offset(media_info)
+        offset = choose_offset(seg)
     else:
         offset = args.offset
 
@@ -90,14 +87,12 @@ def main():
         logging.error("Quit")
         return
 
-    media_info.set_offset(offset)
+    seg.offset = offset
 
     if args.outpath is not None:
         logging.debug("getting outpath from --outpath")
-        media_info.set_outpath(Pather(args.outpath))
+        seg.outpath = args.outpath
     else:
         logging.debug("using in path as outpath")
 
-    media_info.reone()
-
-    media_info.save()
+    seg.save()

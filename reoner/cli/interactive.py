@@ -1,23 +1,23 @@
 import logging
 import os
+import sys
 from typing import Union
 
 from PyInquirer import prompt
 from PyInquirer import style_from_dict
-from pydub.exceptions import TooManyMissingFrames
-from pydub.playback import play
 from pygments.token import Token
 
-from ..core.utils import ReoneableMedia, get_files
-from .. core.pather import Pather
-from .. core.reone import reone
+from ..core.utils import get_files
+from ..core.reoneablemedia import ReoneableMedia
+from ..core.pather import Pather
 
 __all__ = ['choose_offset', 'choose_file']
+
+autoplay = True
 
 
 def _get_files(path):
     opts = get_files(path)
-
     opts.insert(0, "[quit]")
     opts.insert(0, "[up]")
     return opts
@@ -66,27 +66,36 @@ def choose_file() -> Union[str, bool]:
     return loop
 
 
-def choose_offset(media_info: ReoneableMedia):
-    logging.debug(f"total32nds: {media_info.total32nds}")
-    result = nudge_loop(media_info.filename, 0, media_info)
-    while True:
-        if result[0] == "keep-looping":
-            result = nudge_loop(media_info.filename, result[1], media_info)
-        else:
-            break
+def choose_offset(seg: ReoneableMedia):
+    global autoplay
+    logging.debug(f"total32nds: {seg.total32nds}")
+    result, status = nudge_loop(seg)
+    while result is True:
+        result, status = nudge_loop(seg)
+        logging.debug(f"status: {status}")
 
-    if result[0] == "quit":
-        return False
-    elif result[0] == "start":
-        return result[1]
+    if status == "quit":
+        sys.exit(0)
+    elif status == "error":
+        sys.exit(1)
+    elif status == "start":
+        return seg
 
 
-def nudge_loop(file, offset, media_info: ReoneableMedia):
-    print(f"You are listening to:\n {file}")
+def nudge_loop(media: ReoneableMedia):
+    global autoplay
+    print(f"You are listening to:\n {media.filename}")
+    automessage = {
+        "name": "Turn off autoplay",
+        "value": "auto-off"} if autoplay else {
+        "name": "Turn on autoplay",
+        "value": "auto-on"
+    }
+
     questions = [{
         "type": "list",
         "name": "nudge_option",
-        "message": f"Current offset is {offset}.",
+        "message": f"Current offset is {media.offset}.",
         "choices": [{
             "name": "Start it later.",
             "value": "make-bigger"
@@ -94,15 +103,18 @@ def nudge_loop(file, offset, media_info: ReoneableMedia):
             "name": "Start it earlier.",
             "value": "make-smaller"
         }, {
-            "name": f"Preview loop starting at {offset}",
+            "name": f"Preview loop starting at {media.offset}",
             "value": "preview"
+        }, {
+            "name": "Stop playback.",
+            "value": "stop"
         }, {
             "name": "Start here.",
             "value": "start"
         }, {
             "name": "Start it half bar later.",
             "value": "make-bigger-bigger"
-        }, {
+        }, automessage, {
             "name": "Quit",
             "value": "quit"
         }],
@@ -110,22 +122,35 @@ def nudge_loop(file, offset, media_info: ReoneableMedia):
     answers = prompt(questions)
     nudge_option = answers.get("nudge_option")
     if nudge_option == "make-bigger-bigger":
-        offset = (media_info.total32nds, offset + 16)[offset < media_info.total32nds]
-        return ["keep-looping", offset]
+        media.offset += 16
+        if autoplay:
+            media.play()
+        return True, None
     if nudge_option == "make-bigger":
-        offset = (media_info.total32nds, offset + 1)[offset < media_info.total32nds]
-        return ["keep-looping", offset]
+        media.offset += 1
+        if autoplay:
+            media.play()
+        return True, None
     elif nudge_option == "make-smaller":
-        offset = (0, offset - 1)[offset >= 1]
-        return ["keep-looping", offset]
+        media.offset -= 1
+        if autoplay:
+            media.play()
+        return True, None
     elif nudge_option == "preview":
-        try:
-            crandf = reone(file, offset)
-            segment = crandf.current_segment
-            preview = segment[0:2000]
-            print('Playing.')
-            play(preview)
-        except TooManyMissingFrames:
-            print('Segment is too short to preview')
-        return ["keep-looping", offset]
-    return [nudge_option, offset]
+        media.play()
+        return True, None
+    elif nudge_option == "stop":
+        media.stop()
+        return True, None
+    elif nudge_option == "auto-on":
+        autoplay = True
+        media.play()
+        return True, None
+    elif nudge_option == "auto-off":
+        autoplay = False
+        return True, None
+    elif nudge_option == "start":
+        return False, 'start'
+
+    print("Something went wrong")
+    return False, "error"
