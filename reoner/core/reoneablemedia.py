@@ -5,9 +5,8 @@ from decimal import getcontext, Decimal
 from typing import Union, Literal
 
 from pydub import AudioSegment
-from pydub.playback import play as mediaplay
 from pydub.utils import mediainfo
-from pydub.playback import _play_with_simpleaudio
+from pydub.playback import play
 from .pather import Pather
 
 
@@ -22,7 +21,7 @@ class ReoneableMedia:
         self.beat32nd = None
         self.total32nds = None
         self.fp32nd = None
-        self.playhandler = None
+        self.play_handler = None
 
         if not os.path.isfile(filename):
             error = f"file not a file: {filename}"
@@ -75,8 +74,6 @@ class ReoneableMedia:
         self.duration = Decimal(str(self.info["duration"]))
 
         self._calculate_lengths()
-
-
 
     @property
     def stem(self):
@@ -152,18 +149,18 @@ class ReoneableMedia:
 
     def play(self):
         self.stop()
-        self.playhandler = _play_with_simpleaudio(self.current_segment)
+        self.play_handler = play(self.current_segment)
         # mediaplay(self.current_segment)
 
     def preview(self):
         self.stop()
         """Play first two seconds"""
         seg = self.current_segment[0:2000]
-        self.playhandler = _play_with_simpleaudio(seg)
+        self.play_handler = play(seg)
 
     def stop(self):
-        if self.playhandler is not None and self.playhandler.is_playing():
-            self.playhandler.stop()
+        if self.play_handler is not None and self.play_handler.is_playing():
+            self.play_handler.stop()
 
     def save(self, outpath=None):
         if outpath is not None:
@@ -175,3 +172,7 @@ class ReoneableMedia:
         with open(filename, "wb") as outfile:
             self.current_segment.export(outfile, format="wav")
             print(f"File written to {filename}")
+
+
+def make(filename):
+    return ReoneableMedia(filename.__str__())
