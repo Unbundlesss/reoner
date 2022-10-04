@@ -139,3 +139,23 @@ class Pather(os.PathLike):
         if kwargs.get("required", False) and not os.path.exists(absolute_path):
             raise ImproperlyConfigured("Create required path: {}".format(absolute_path))
         return absolute_path
+
+
+class PatherFile(Pather):
+    def __init__(self, filename, start="", *paths, **kwargs):
+        super().__init__(start, *paths, **kwargs)
+
+        absolute = self._absolute_join(start, *paths, **kwargs)
+        self.__root__ = absolute.__str__()
+        self.__filename__ = filename.__str__().strip("/")
+
+    @property
+    def root(self):
+        """Current directory for this Path"""
+        return self.__root__
+
+    def filepath(self):
+        return self.__str__()
+
+    def __str__(self):
+        return self.__root__ + '/' + self.__filename__
