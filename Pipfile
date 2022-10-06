@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 pydub = "*"
 pyinquirer = "*"
-prompt-toolkit = "*"
+prompt-toolkit = "==3.0.29"
 pygments = "*"
 pysimplegui = "*"
 build = "*"
@@ -15,6 +15,7 @@ simpleaudio = "*"
 [dev-packages]
 black = "*"
 setuptools = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.9"

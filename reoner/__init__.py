@@ -5,7 +5,8 @@ def from_file(filename):
     return ReoneableMedia(filename)
 
 
-__all__ = [
-    'from_file'
-    'ReoneableMedia'
-]
+# __all__ = [
+#     'from_file'
+#     'ReoneableMedia'
+#     'cli'
+# ]
