@@ -1,4 +1,8 @@
 from setuptools import setup
 
-if __name__ == "__main__":
-    setup()
+setup(name="reone",
+      description='Audio Loop Re-one-ing tool',
+      author='Jake Gustafson',
+      author_email='jgustafx@gmail.com',
+      packages=['reone', 'reone.pather']
+      )
