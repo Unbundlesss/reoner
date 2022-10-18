@@ -11,6 +11,7 @@ pygments = "*"
 pysimplegui = "*"
 build = "*"
 simpleaudio = "*"
+pytest-mock = "*"
 
 [dev-packages]
 black = "*"
