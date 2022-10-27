@@ -11,13 +11,36 @@ class Pather(os.PathLike):
     https://github.com/joke2k/django-environ/blob/main/environ/environ.py
     """
 
-    def path(self, *paths, **kwargs):
-        """Create new Path based on `self.root` and provided paths.
+    def get_files(self, ext='aiff') -> list[str]:
+        ext = ext.lstrip('.')
+        opts: list[str] = os.listdir(self.__root__)
+        # return a list of
+        opts = [f'{i}/'
+                if os.path.isdir(i)
+                else i for i in opts
+                if os.path.isdir(i)
+                or i.endswith(f".{ext}")]
+        # filter out hidden files
+        filter(lambda x: not x.startswith('.'), opts)
+        # sort files
+        opts = sorted(opts, key=lambda x: x)
 
-        :param paths: List of sub paths
-        :param kwargs: required=False
-        :rtype: Pather
-        """
+        return opts
+
+    def get_files_full_paths(self, ext='aiff') -> list[str]:
+        ext = ext.lstrip('.')
+        path = self.__root__
+        list_em: list[str] = os.listdir(path)
+        opts = [f"{path}/{i}"
+                if os.path.isfile(f"{path}/{i}")
+                else None for i in list_em
+                if i.endswith(f".{ext}")]
+        opts = filter(lambda x: x is not None and not x.startswith('.'), opts)
+        # cast as list otherwise it's an iterable
+        opts = sorted(opts, key=lambda x: x)
+        return opts
+
+    def path(self, *paths, **kwargs):
         return self.__class__(self.__root__, *paths, **kwargs)
 
     @staticmethod
@@ -51,19 +74,37 @@ class Pather(os.PathLike):
         """
         return open(self(name), *args, **kwargs)
 
-    def cd(self, start="", *paths, **kwargs):
-        if start:
-            self.__root__ = self._absolute_join(start, *paths, **kwargs)
+    # def cd(self, start="", *paths, **kwargs):
+    #     if start:
+    #         self.__root__ = self._absolute_join(start, *paths, **kwargs)
+    #     os.chdir(self.__root__)
+    #     return self.__root__
+
+    def _change_dir(self, path):
+        self.__root__ = self._absolute_join(self.__root__, path)
         os.chdir(self.__root__)
         return self.__root__
+
+    def cd(self, path=None):
+        if path is None:
+            path = '.'
+        self._change_dir(path)
+
+    @property
+    def ls(self):
+        return sorted(
+            filter(
+                lambda x: not x.startswith('.'),
+                os.listdir(self.__root__)),
+            key=lambda x: x)
 
     @property
     def root(self):
         """Current directory for this Path"""
         return self.__root__
 
-    def __init__(self, start="", *paths, **kwargs):
-        super().__init__()
+    def __init__(self, start=".", *paths, **kwargs):
+        # super().__init__()
         absolute = self._absolute_join(start, *paths, **kwargs)
         self.__root__ = absolute
 
@@ -129,14 +170,16 @@ class Pather(os.PathLike):
 
     @staticmethod
     def _absolute_join(base, *paths, **kwargs):
-        real = os.path.abspath(os.path.realpath(base))
-        absolute_path = os.path.abspath(os.path.join(real, *paths))
+        # resolve symlinks
+        real_base = os.path.realpath(base)
+
+        absolute_path = os.path.normpath(os.path.join(real_base, *paths))
         if not os.path.isdir(absolute_path):
             parent = os.path.dirname(absolute_path)
             if os.path.isdir(parent):
                 return parent
             raise ImproperlyConfigured("Is not a directory: {}".format(absolute_path))
-        if kwargs.get("required", False) and not os.path.exists(absolute_path):
+        if kwargs.get('required') and not os.path.exists(absolute_path):
             raise ImproperlyConfigured("Create required path: {}".format(absolute_path))
         return absolute_path
 
