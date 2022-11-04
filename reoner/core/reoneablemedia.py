@@ -16,7 +16,7 @@ class ReoneableMedia:
         self._bpm = 0.0000
 
         self._outpath = ""
-        self.finalname = ""
+        self.final_name = ""
         self.beat_length = None
         self.beat32nd = None
         self.total32nds = None
@@ -123,7 +123,7 @@ class ReoneableMedia:
     @outpath.setter
     def outpath(self, path):
         self._outpath = Pather(path)
-        self.finalname = f"{self._outpath}/{self.outname}"
+        self.final_name = f"{self._outpath}/{self.outname}"
 
     @property
     def offset(self):
@@ -167,12 +167,12 @@ class ReoneableMedia:
             self.outpath = outpath
 
         # final name updated automatically
-        filename = self.finalname
+        filename = self.final_name
         logging.debug(f"Save target is {filename}")
         with open(filename, "wb") as outfile:
             self.current_segment.export(outfile, format="wav")
             print(f"File written to {filename}")
 
 
-def make(filename):
+def create_reoneable_media(filename):
     return ReoneableMedia(filename.__str__())
