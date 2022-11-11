@@ -25,9 +25,11 @@ class Option(Focusable):
     highlighted_style = 'fg:black bg:lightcyan'
     indent = 2
 
-    def __init__(self, order, focusable_order, text, value=None):
+    def __init__(self, order, focusable_order, text: Optional[str] = None,
+                 value: Optional[str] = None, status_line: Optional[str] = None):
         self.text = text
         self.value = value
+        self.status_line = status_line
         self.order = order
         self.focusable_order = focusable_order
 
