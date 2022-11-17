@@ -10,11 +10,9 @@ example inputs:
 4 - name name - Smudge - 57.1445BPM - 2021-08-13-08-33.aiff
 """
 
-__all__ = ['reone', 'reone_directory', 'reone_multiple']
-
 
 def reone(filename, offset):
-    media = ReoneableMedia(filename)
+    media = create_reoneable_media(filename)
     media.offset = offset
     return media
 
