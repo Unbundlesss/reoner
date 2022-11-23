@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-
-
 # Procedural code will work with Context.
 # Behavior defined in classes implementing State
+
+from typing import Optional, Union, TypeVar
+
+T = TypeVar("T")
 
 
 class State(ABC):

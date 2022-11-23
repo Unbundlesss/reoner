@@ -1,9 +1,5 @@
-from .core.reoneablemedia import ReoneableMedia
-
-
-def from_file(filename):
-    return ReoneableMedia(filename)
-
+# from .core.reoneablemedia import ReoneableMedia
+# from .cli.menu import Menu
 
 # __all__ = [
 #     'from_file'
