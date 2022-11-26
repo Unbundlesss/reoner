@@ -1,7 +1,7 @@
 import logging
 from . pather import Pather
 from ..cli.interactive import get_files_full_paths
-from . reoneablemedia import ReoneableMedia
+from .reoneablemedia import  create_reoneable_media
 
 """
 example inputs:
@@ -29,6 +29,6 @@ def reone_multiple(filelist, offset):
     for i in filelist:
         # current = ReoneableMedia(i)
         logging.debug(f"File {i}")
-        media = ReoneableMedia(i)
+        media = create_reoneable_media(i)
         media.offset = offset
         media.save()
