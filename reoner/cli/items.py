@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class MenuItem:
     focusable = False
     text_style = 'fg:white'
