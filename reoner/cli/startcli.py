@@ -2,13 +2,32 @@ import argparse
 import logging
 from decimal import Decimal
 from ..core.reone import reone_directory
-from .interactive import choose_file, choose_offset
+# from .interactive import choose_file, choose_offset
 from ..core.pather import Pather
 from ..core.reoneablemedia import ReoneableMedia
 
 
 def main():
     parser = argparse.ArgumentParser(description="Re-one your rifffs.")
+
+    parser.add_argument("startpath", type=Pather.arg_type, help="A directory or file to operate on.", nargs="?")
+
+    parser.add_argument(
+        "--outpath",
+        type=Pather.arg_type,
+        required=False,
+        help="Directory where to output files.",
+    )
+
+    # Make sure to do this AFTER the definitions.
+    args = parser.parse_args()
+
+    if args.verbose is True:
+        logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
+
+    logging.debug(args)
+
+'''
     parser.add_argument("file", type=str, help="Path to input file.", nargs="?")
     parser.add_argument(
         "--outpath",
@@ -49,7 +68,16 @@ def main():
         logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
 
     logging.debug(args)
+    
+    parser.add_argument(
+        "--directory",
+        action="store_true",
+        required=False,
+        help="Specify that the path entered is a directory.",
+    )
+'''
 
+'''
     if args.directory is True:
         if args.offset is None:
             logging.error("--directory requires --offset to be specified")
@@ -96,3 +124,10 @@ def main():
         logging.debug("using in path as outpath")
 
     seg.save()
+    
+    
+'''
+
+
+if __name__ == '__main__':
+    main()
