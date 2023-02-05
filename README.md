@@ -5,29 +5,16 @@ Re-synchronize your Endlesss riffs to start on the 'one' beat.
 ## Usage
 - Requires [ffmpeg](https://www.ffmpeg.org/download.html). 
 - Install dependencies mentioned in Pipfile (virtual environment highly recommended):
-  - python 3.9
-  - pydub
-  - pyinquirer
-
-```shell
-python run.py
+- If you have pipenv, that is easiest.
 ```
-- or run script with offset and optional filename:
-```shell
-python run.py <filename> --offset <offset>
+pipenv install
+pipenv shell
 ```
 
-If filename is not provided, then an interactive chooser will be started. All options are optional.
-
-Full options:
-```shell
-python run.py [-h] [--outpath OUTPATH] [--bpm BPM] --offset OFFSET [file]
+Start the interactive cli:
 ```
-OUTPATH is a directory, not a file. It will default to the same folder as the source file. It will use the same file name but with `.wav` instead. Does not hesitate to overwrite the same `wav` file over and over.
-
-BPM is in case the bpm is not in the file name, such as the case for older riff exports. Filenames with bpm in them look like this: `2 - jgusta - Audio In - 135.1234BPM - 2022-03-16-09-55.aiff`
-
-OFFSET is specified in number of 32nd notes. If not specified you can preview the offset in the interactive thing. It's extremely clunky right now but works.
+python -m reoner.cli
+```
 
 
 ## Background
