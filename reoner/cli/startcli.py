@@ -1,23 +1,12 @@
 import argparse
 import logging
-from decimal import Decimal
-from ..core.reone import reone_directory
-# from .interactive import choose_file, choose_offset
 from ..core.pather import Pather
-from ..core.reoneablemedia import ReoneableMedia
-
+from cli_machine import make_machine
 
 def main():
     parser = argparse.ArgumentParser(description="Re-one your rifffs.")
 
     parser.add_argument("startpath", type=Pather.arg_type, help="A directory or file to operate on.", nargs="?")
-
-    parser.add_argument(
-        "--outpath",
-        type=Pather.arg_type,
-        required=False,
-        help="Directory where to output files.",
-    )
 
     # Make sure to do this AFTER the definitions.
     args = parser.parse_args()
@@ -26,6 +15,26 @@ def main():
         logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
 
     logging.debug(args)
+
+    if args.startpath is not None:
+        path = args.startpath
+    else:
+        path = '.'
+
+    # options = {
+    #     "verbose": True,
+    #     "offset": None,
+    #     "file": Pather(path),
+    #     "bpm": 123.00,
+    #     "outpath": None
+    # }
+
+    machine = make_machine(path)
+
+    machine.action()
+
+
+
 
 '''
     parser.add_argument("file", type=str, help="Path to input file.", nargs="?")

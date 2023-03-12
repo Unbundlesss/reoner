@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 # Procedural code will work with Context.
-# Behavior defined in classes implementing State
+#
 
 from typing import Optional, Union, TypeVar
 
@@ -10,8 +10,22 @@ T = TypeVar("T")
 
 
 class State(ABC):
-    # do not try and pass context in here this is just
-    # to initialize the variable. State must not
+    """
+    Generally, the context is specific to a set of states and carries
+    the data that the states operate on.
+
+    State is a set of behaviors or side effects; its action method
+    determines the starting behavior. The state may also react to events.
+    Ultimately, the state decides when to transition.
+
+    A transition is the act of a context swapping out its current state for another.
+
+    At the end of each transition, the context calls the states' action method
+    to initialize the state and its behavior.
+
+    States should extend this class and contexts should extend Context.
+    """
+
     def __init__(self, state_result: str = 'No result'):
         self.state_result = state_result
         self._context = None
@@ -83,6 +97,10 @@ class Context:
         return type(self._state).__name__
 
     def transition(self, state: State) -> None:
+        """
+        It is tempting to call action() from here.
+        But then the states would be calling each other
+        """
         self._state = state
         self._state.context = self
 

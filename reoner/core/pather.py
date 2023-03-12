@@ -8,11 +8,49 @@ import re
 class ImproperlyConfigured(Exception):
     pass
 
+def make_pather(start, *paths):
+    """Return a Pather or PatherFile as appropriate"""
+    res_path = absolute_join(start, *paths)
+    if res_path.is_file():
+        return PatherFile(res_path.file.__str__())
+    return Pather(res_path.__str__())
+
+def absolute_join(base: string, *paths, **kwargs):
+    """
+    Find the normalized absolute path of base + paths.
+    If base + paths is a file, return the parent directory of that file.
+    """
+    class PathOrFile(str):
+        def __init__(self, in_dir, in_file=None):
+            self.dir = in_dir
+            self.file = in_file
+        def __str__(self):
+            return self.dir.__str__()
+        def is_file(self):
+            return self.file is not None
+
+    real_base = os.path.realpath(base)
+    absolute_path = os.path.normpath(os.path.join(real_base, *paths))
+    if not os.path.isdir(absolute_path):
+        parent = os.path.dirname(absolute_path)
+        if os.path.isdir(parent):
+            if os.path.isfile(absolute_path):
+                return PathOrFile(parent, os.path.basename(absolute_path))
+            return PathOrFile(parent)
+        raise ImproperlyConfigured("Is not a directory: {}".format(absolute_path))
+    if kwargs.get('required') and not os.path.exists(absolute_path):
+        raise ImproperlyConfigured("Create required path: {}".format(absolute_path))
+    return PathOrFile(absolute_path)
+
 
 class Pather(os.PathLike):
     """Contains code from django-environs
     https://github.com/joke2k/django-environ/blob/main/environ/environ.py
     """
+    def __init__(self, start=".", *paths, **kwargs):
+        # super().__init__()
+        absolute = absolute_join(start, *paths, **kwargs)
+        self.__root__ = absolute
 
     def get_files(self, ext='aiff') -> list[str]:
         ext = ext.lstrip('.')
@@ -48,20 +86,19 @@ class Pather(os.PathLike):
 
     @staticmethod
     def arg_type(arg):
-        """For argparse
-
-        :param arg:
-        :rtype: Pather
-        :raises: ValueError
-        """
-
         if os.path.isdir(arg):
             try:
                 return Pather(arg)
             except Exception:
                 raise ValueError(Exception)
+        elif os.path.isfile(arg):
+            try:
+                return PatherFile(arg)
+            except Exception:
+                raise ValueError(Exception)
+
         else:
-            raise ValueError("The argument provided is not a directory.")
+            raise ValueError("The argument provided is not a directory or a file.")
 
     def isdir(self):
         return os.path.isdir(self.__str__())
@@ -79,12 +116,12 @@ class Pather(os.PathLike):
 
     # def cd(self, start="", *paths, **kwargs):
     #     if start:
-    #         self.__root__ = self._absolute_join(start, *paths, **kwargs)
+    #         self.__root__ = absolute_join(start, *paths, **kwargs)
     #     os.chdir(self.__root__)
     #     return self.__root__
 
     def _change_dir(self, path):
-        self.__root__ = self._absolute_join(self.__root__, path)
+        self.__root__ = absolute_join(self.__root__, path)
         os.chdir(self.__root__)
         return self.__root__
 
@@ -106,16 +143,12 @@ class Pather(os.PathLike):
         """Current directory for this Path"""
         return self.__root__
 
-    def __init__(self, start=".", *paths, **kwargs):
-        # super().__init__()
-        absolute = self._absolute_join(start, *paths, **kwargs)
-        self.__root__ = absolute
 
     def __call__(self, *paths, **kwargs):
         """Retrieve the absolute path, with appended paths
         :param paths: List of sub path of `self.root`
         """
-        return self._absolute_join(self.__root__, *paths, **kwargs)
+        return absolute_join(self.__root__, *paths, **kwargs)
 
     def __eq__(self, other):
         return self.__root__ == other.__root__
@@ -171,27 +204,12 @@ class Pather(os.PathLike):
     def find(self, *args, **kwargs):
         return self.__str__().find(*args, **kwargs)
 
-    @staticmethod
-    def _absolute_join(base, *paths, **kwargs):
-        # resolve symlinks
-        real_base = os.path.realpath(base)
-
-        absolute_path = os.path.normpath(os.path.join(real_base, *paths))
-        if not os.path.isdir(absolute_path):
-            parent = os.path.dirname(absolute_path)
-            if os.path.isdir(parent):
-                return parent
-            raise ImproperlyConfigured("Is not a directory: {}".format(absolute_path))
-        if kwargs.get('required') and not os.path.exists(absolute_path):
-            raise ImproperlyConfigured("Create required path: {}".format(absolute_path))
-        return absolute_path
-
 
 class PatherFile(Pather):
-    def __init__(self, filename, start="", *paths, **kwargs):
+    def __init__(self, filename, start=".", *paths, **kwargs):
         super().__init__(start, *paths, **kwargs)
 
-        absolute = self._absolute_join(start, *paths, **kwargs)
+        absolute = absolute_join(start, *paths, **kwargs)
         self.__root__ = absolute.__str__()
         self.__filename__ = filename.__str__().strip("/")
 
