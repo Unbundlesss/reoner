@@ -8,6 +8,7 @@ import re
 class ImproperlyConfigured(Exception):
     pass
 
+
 def make_pather(start, *paths):
     """Return a Pather or PatherFile as appropriate"""
     res_path = absolute_join(start, *paths)
@@ -15,17 +16,21 @@ def make_pather(start, *paths):
         return PatherFile(res_path.file.__str__())
     return Pather(res_path.__str__())
 
+
 def absolute_join(base: string, *paths, **kwargs):
     """
     Find the normalized absolute path of base + paths.
     If base + paths is a file, return the parent directory of that file.
     """
+
     class PathOrFile(str):
         def __init__(self, in_dir, in_file=None):
             self.dir = in_dir
             self.file = in_file
+
         def __str__(self):
             return self.dir.__str__()
+
         def is_file(self):
             return self.file is not None
 
@@ -38,7 +43,7 @@ def absolute_join(base: string, *paths, **kwargs):
                 return PathOrFile(parent, os.path.basename(absolute_path))
             return PathOrFile(parent)
         raise ImproperlyConfigured("Is not a directory: {}".format(absolute_path))
-    if kwargs.get('required') and not os.path.exists(absolute_path):
+    if kwargs.get("required") and not os.path.exists(absolute_path):
         raise ImproperlyConfigured("Create required path: {}".format(absolute_path))
     return PathOrFile(absolute_path)
 
@@ -47,36 +52,38 @@ class Pather(os.PathLike):
     """Contains code from django-environs
     https://github.com/joke2k/django-environ/blob/main/environ/environ.py
     """
+
     def __init__(self, start=".", *paths, **kwargs):
         # super().__init__()
         absolute = absolute_join(start, *paths, **kwargs)
         self.__root__ = absolute
 
-    def get_files(self, ext='aiff') -> list[str]:
-        ext = ext.lstrip('.')
+    def get_files(self, ext="aiff") -> list[str]:
+        ext = ext.lstrip(".")
         opts: list[str] = os.listdir(self.__root__)
         # return a list of
-        opts = [f'{i}/'
-                if os.path.isdir(i)
-                else i for i in opts
-                if os.path.isdir(i)
-                or i.endswith(f".{ext}")]
+        opts = [
+            f"{i}/" if os.path.isdir(i) else i
+            for i in opts
+            if os.path.isdir(i) or i.endswith(f".{ext}")
+        ]
         # filter out hidden files
-        filter(lambda x: not x.startswith('.'), opts)
+        filter(lambda x: not x.startswith("."), opts)
         # sort files
         opts = sorted(opts, key=lambda x: x)
 
         return opts
 
-    def get_files_full_paths(self, ext='aiff') -> list[str]:
-        ext = ext.lstrip('.')
+    def get_files_full_paths(self, ext="aiff") -> list[str]:
+        ext = ext.lstrip(".")
         path = self.__root__
         list_em: list[str] = os.listdir(path)
-        opts = [f"{path}/{i}"
-                if os.path.isfile(f"{path}/{i}")
-                else None for i in list_em
-                if i.endswith(f".{ext}")]
-        opts = filter(lambda x: x is not None and not x.startswith('.'), opts)
+        opts = [
+            f"{path}/{i}" if os.path.isfile(f"{path}/{i}") else None
+            for i in list_em
+            if i.endswith(f".{ext}")
+        ]
+        opts = filter(lambda x: x is not None and not x.startswith("."), opts)
         # cast as list otherwise it's an iterable
         opts = sorted(opts, key=lambda x: x)
         return opts
@@ -127,22 +134,20 @@ class Pather(os.PathLike):
 
     def cd(self, path=None):
         if path is None:
-            path = '.'
+            path = "."
         self._change_dir(path)
 
     @property
     def ls(self):
         return sorted(
-            filter(
-                lambda x: not x.startswith('.'),
-                os.listdir(self.__root__)),
-            key=lambda x: x)
+            filter(lambda x: not x.startswith("."), os.listdir(self.__root__)),
+            key=lambda x: x,
+        )
 
     @property
     def root(self):
         """Current directory for this Path"""
         return self.__root__
-
 
     def __call__(self, *paths, **kwargs):
         """Retrieve the absolute path, with appended paths
@@ -222,25 +227,34 @@ class PatherFile(Pather):
         return self.__str__()
 
     def __str__(self):
-        return self.__root__ + '/' + self.__filename__
+        return self.__root__ + "/" + self.__filename__
 
 
-def clean_filename(filename, whitelist=None, replace=''):
-    valid_filename_chars = "-_.() %s%s%s" % (string.ascii_letters, string.digits, whitelist)
+def clean_filename(filename, whitelist=None, replace=""):
+    valid_filename_chars = "-_.() %s%s%s" % (
+        string.ascii_letters,
+        string.digits,
+        whitelist,
+    )
     char_limit = 255
 
     # replace spaces
     for r in replace:
-        filename = filename.replace(r, '_')
+        filename = filename.replace(r, "_")
 
     # keep only valid ascii chars
-    cleaned_filename = unicodedata.normalize('NFKD', filename).encode('ASCII', 'ignore').decode()
+    cleaned_filename = (
+        unicodedata.normalize("NFKD", filename).encode("ASCII", "ignore").decode()
+    )
 
     # keep only whitelisted chars
-    cleaned_filename = ''.join(c for c in cleaned_filename if c in valid_filename_chars)
-    re.sub('_{2,}', '_', filename)
+    cleaned_filename = "".join(c for c in cleaned_filename if c in valid_filename_chars)
+    re.sub("_{2,}", "_", filename)
     if len(cleaned_filename) > char_limit:
         print(
-            "Warning, filename truncated because it was over {}. Filenames may no longer be unique".format(char_limit))
+            "Warning, filename truncated because it was over {}. Filenames may no longer be unique".format(
+                char_limit
+            )
+        )
 
     return cleaned_filename[:char_limit]

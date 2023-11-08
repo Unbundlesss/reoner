@@ -12,6 +12,9 @@ pysimplegui = "*"
 build = "*"
 simpleaudio = "*"
 pytest-mock = "*"
+pytest = "*"
+black = "*"
+kivy = "*"
 
 [dev-packages]
 black = "*"
