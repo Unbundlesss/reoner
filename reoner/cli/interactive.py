@@ -114,7 +114,11 @@ def nudge_loop(media: ReoneableMedia):
         }, {
             "name": "Start it half bar later.",
             "value": "make-bigger-bigger"
-        }, automessage, {
+        }, {
+            "name": "Show stats.",
+            "value":"debug"
+        },
+        automessage, {
             "name": "Quit",
             "value": "quit"
         }],
@@ -135,6 +139,9 @@ def nudge_loop(media: ReoneableMedia):
         media.offset -= 1
         if autoplay:
             media.play()
+        return True, None
+    elif nudge_option == "debug":
+        print(f"BPM (float): {media.floatBpm}\nBPM (decimal): {media._bpm}\nQuarter note length (sec): {media.beat_length}\nTotal frames: {media.duration_ts}\nTotal Length (sec): {media.duration}\nTotal 32nds: {media.total32nds}\nFrames per 32nd note: {media.fp32nd}")
         return True, None
     elif nudge_option == "preview":
         media.play()

@@ -43,6 +43,8 @@ class ReoneableMedia:
             logging.error(error)
             raise AttributeError(error)
 
+        self.floatBpm = self._bpm / 60
+
         # set the filename based on the existing one
         root, ext = os.path.splitext(os.path.basename(filename))
         self.outname = f"{root}.wav"
@@ -66,10 +68,10 @@ class ReoneableMedia:
         self.info = mediainfo(filename)
         logging.debug(self.info)
 
-        # duration as time
+        # duration as frames
         self.duration_ts = Decimal(str(self.info["duration_ts"]))
 
-        # duration as frames
+        # duration as time
         self.duration = Decimal(str(self.info["duration"]))
 
         self._calculate_lengths()
