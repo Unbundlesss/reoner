@@ -5,3 +5,7 @@ __pycache__
 *.pyc
 *.egg-info
 build
+*.spec
+*.wav
+dist
+build
