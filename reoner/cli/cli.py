@@ -79,7 +79,8 @@ def main():
         seg = ReoneableMedia(sound_file)
 
     if args.offset is None:
-        offset = choose_offset(seg)
+        seg = choose_offset(seg)
+        offset = seg.offset
     else:
         offset = args.offset
 

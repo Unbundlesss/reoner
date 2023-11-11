@@ -11,7 +11,7 @@ from ..core.utils import get_files
 from ..core.reoneablemedia import ReoneableMedia
 from ..core.pather import Pather
 
-__all__ = ['choose_offset', 'choose_file']
+__all__ = ["choose_offset", "choose_file"]
 
 autoplay = True
 
@@ -24,15 +24,18 @@ def _get_files(path):
 
 
 def _choose_file_prompt() -> Union[str, bool]:
-    default_style = style_from_dict({
-        Token.Separator: '#ansired',
-        Token.QuestionMark: '#ansigreen',
-        Token.Selected: '#ansiblue',
-        Token.Pointer: '#ansiblue bold',
-        Token.Instruction: '#ansiyellow',  # default
-        Token.Answer: '#ansiyellow bold',
-        Token.Question: '#ansiyellow',
-    }, include_defaults=True)
+    default_style = style_from_dict(
+        {
+            Token.Separator: "#ansired",
+            Token.QuestionMark: "#ansigreen",
+            Token.Selected: "#ansiblue",
+            Token.Pointer: "#ansiblue bold",
+            Token.Instruction: "#ansiyellow",  # default
+            Token.Answer: "#ansiyellow bold",
+            Token.Question: "#ansiyellow",
+        },
+        include_defaults=True,
+    )
     current_path = Pather(os.getcwd())
     print(current_path)
     questions = [
@@ -85,44 +88,33 @@ def choose_offset(seg: ReoneableMedia):
 def nudge_loop(media: ReoneableMedia):
     global autoplay
     print(f"You are listening to:\n {media.filename}")
-    automessage = {
-        "name": "Turn off autoplay",
-        "value": "auto-off"} if autoplay else {
-        "name": "Turn on autoplay",
-        "value": "auto-on"
-    }
+    automessage = (
+        {"name": "Turn off autoplay", "value": "auto-off"}
+        if autoplay
+        else {"name": "Turn on autoplay", "value": "auto-on"}
+    )
 
-    questions = [{
-        "type": "list",
-        "name": "nudge_option",
-        "message": f"Current offset is {media.offset}.",
-        "choices": [{
-            "name": "Start it later.",
-            "value": "make-bigger"
-        }, {
-            "name": "Start it earlier.",
-            "value": "make-smaller"
-        }, {
-            "name": f"Preview loop starting at {media.offset}",
-            "value": "preview"
-        }, {
-            "name": "Stop playback.",
-            "value": "stop"
-        }, {
-            "name": "Start here.",
-            "value": "start"
-        }, {
-            "name": "Start it half bar later.",
-            "value": "make-bigger-bigger"
-        }, {
-            "name": "Show stats.",
-            "value":"debug"
-        },
-        automessage, {
-            "name": "Quit",
-            "value": "quit"
-        }],
-    }]
+    questions = [
+        {
+            "type": "list",
+            "name": "nudge_option",
+            "message": f"Current offset is {media.offset}.",
+            "choices": [
+                {"name": "Start it later.", "value": "make-bigger"},
+                {"name": "Start it earlier.", "value": "make-smaller"},
+                {
+                    "name": f"Preview loop starting at {media.offset}",
+                    "value": "preview",
+                },
+                {"name": "Stop playback.", "value": "stop"},
+                {"name": "Start here.", "value": "start"},
+                {"name": "Start it half bar later.", "value": "make-bigger-bigger"},
+                {"name": "Show stats.", "value": "debug"},
+                automessage,
+                {"name": "Quit", "value": "quit"},
+            ],
+        }
+    ]
     answers = prompt(questions)
     nudge_option = answers.get("nudge_option")
     if nudge_option == "make-bigger-bigger":
@@ -141,7 +133,9 @@ def nudge_loop(media: ReoneableMedia):
             media.play()
         return True, None
     elif nudge_option == "debug":
-        print(f"BPM (float): {media.floatBpm}\nBPM (decimal): {media._bpm}\nQuarter note length (sec): {media.beat_length}\nTotal frames: {media.duration_ts}\nTotal Length (sec): {media.duration}\nTotal 32nds: {media.total32nds}\nFrames per 32nd note: {media.fp32nd}")
+        print(
+            f"BPM (float): {media.floatBpm}\nBPM (decimal): {media._bpm}\nQuarter note length (sec): {media.beat_length}\nTotal frames: {media.duration_ts}\nTotal Length (sec): {media.duration}\nTotal 32nds: {media.total32nds}\nFrames per 32nd note: {media.fp32nd}"
+        )
         return True, None
     elif nudge_option == "preview":
         media.play()
@@ -157,7 +151,7 @@ def nudge_loop(media: ReoneableMedia):
         autoplay = False
         return True, None
     elif nudge_option == "start":
-        return False, 'start'
+        return False, "start"
 
     print("Something went wrong")
     return False, "error"
