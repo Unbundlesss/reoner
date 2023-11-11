@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import logging
 import os
 import re
@@ -8,7 +9,13 @@ from pydub import AudioSegment
 from pydub.playback import play as mediaplay
 from pydub.utils import mediainfo
 from pydub.playback import _play_with_simpleaudio
-from .pather import Pather
+from .pather import Pather, PatherFile
+
+ffmpeg = os.path.realpath(os.path.join("reoner", "bin", "ffmpeg"))
+if not os.path.isfile(ffmpeg):
+    raise FileNotFoundError(f"ffmpeg not found at {ffmpeg}")
+
+AudioSegment.ffmpeg = ffmpeg
 
 
 class ReoneableMedia:
@@ -16,8 +23,6 @@ class ReoneableMedia:
         # filename = kwargs.get("filename", False)
         self._bpm = 0.0000
 
-        self._outpath = ""
-        self.finalname = ""
         self.beat_length = None
         self.beat32nd = None
         self.total32nds = None
@@ -47,8 +52,8 @@ class ReoneableMedia:
 
         # set the filename based on the existing one
         root, ext = os.path.splitext(os.path.basename(filename))
-        self.outname = f"{root}.wav"
-
+        self._outname = f"{root}.wav"
+        self._outpath = os.path.dirname(filename)
         with open(filename, "rb") as sound:
             segment = AudioSegment.from_file(sound)
 
@@ -58,10 +63,6 @@ class ReoneableMedia:
         self.original_segment = segment
         self.current_segment = segment
         self.filename = filename
-
-        # self._outpath = None
-        # self.outpath(filename)
-        self.outpath = filename
 
         getcontext().prec = 4
 
@@ -75,8 +76,6 @@ class ReoneableMedia:
         self.duration = Decimal(str(self.info["duration"]))
 
         self._calculate_lengths()
-
-
 
     @property
     def stem(self):
@@ -109,13 +108,13 @@ class ReoneableMedia:
 
     @staticmethod
     def extract_bpm(name: str) -> Union[Decimal, Literal[False]]:
-        logging.debug('getting from filename')
+        logging.debug("getting from filename")
         valid = re.compile(r"\b(\d{2,3}(?:\.\d{1,10})?)BPM\b", re.I)
         try:
             match = valid.search(name).group(1)
             return Decimal(match)
         except AttributeError:
-            logging.debug('getting from filename failed')
+            logging.debug("getting from filename failed")
             return False
 
     @property
@@ -126,7 +125,19 @@ class ReoneableMedia:
     @outpath.setter
     def outpath(self, path):
         self._outpath = Pather(path)
-        self.finalname = f"{self._outpath}/{self.outname}"
+
+    @property
+    def outname(self):
+        return self._outname
+
+    @outname.setter
+    def outname(self, name):
+        """The name of the output file"""
+        self._outname = name
+
+    @property
+    def finalfile(self):
+        return PatherFile(self._outpath, self._outname)
 
     @property
     def offset(self):
@@ -135,15 +146,15 @@ class ReoneableMedia:
     @offset.setter
     def offset(self, value):
         # TODO some kind of validation
-        self._offset = value
+        self._offset = int(value)
         normalized = self._offset % self.total32nds
 
         end = int(self.original_segment.frame_count())
 
         start = int(normalized * self.fp32nd)
 
-        logging.debug(f'seg 1 {start} - {end}')
-        logging.debug(f'seg 2 {0} - {start - 1}')
+        logging.debug(f"seg 1 {start} - {end}")
+        logging.debug(f"seg 2 {0} - {start - 1}")
 
         # re-assemble the loop
         slice1 = self.original_segment.get_sample_slice(start, end)
@@ -165,13 +176,17 @@ class ReoneableMedia:
         if self.playhandler is not None and self.playhandler.is_playing():
             self.playhandler.stop()
 
-    def save(self, outpath=None):
-        if outpath is not None:
-            self.outpath = outpath
+    @contextmanager
+    def writebin(self):
+        name = self.finalfile
+        try:
+            f = open(name, "wb")
+            yield (f, name)
+        finally:
+            f.close()
 
+    def save(self):
         # final name updated automatically
-        filename = self.finalname
-        logging.debug(f"Save target is {filename}")
-        with open(filename, "wb") as outfile:
-            self.current_segment.export(outfile, format="wav")
+        with self.writebin() as (stream, filename):
+            self.current_segment.export(stream, format="wav")
             print(f"File written to {filename}")
