@@ -11,6 +11,7 @@ pygments = "*"
 pysimplegui = "*"
 build = "*"
 simpleaudio = "*"
+pyinstaller = "*"
 
 [dev-packages]
 black = "*"
