@@ -11,13 +11,6 @@ from pydub.utils import mediainfo
 from pydub.playback import _play_with_simpleaudio
 from .pather import Pather, PatherFile
 
-ffmpeg = os.path.realpath(os.path.join("reoner", "bin", "ffmpeg"))
-if not os.path.isfile(ffmpeg):
-    raise FileNotFoundError(f"ffmpeg not found at {ffmpeg}")
-
-AudioSegment.ffmpeg = ffmpeg
-
-
 class ReoneableMedia:
     def __init__(self, filename, **kwargs):
         # filename = kwargs.get("filename", False)
